@@ -92,8 +92,7 @@ La température et la salinité de l'eau de mer sont les paramètres fondamentau
 
 #### Construction du kit
 
-La construction du kit comprend 4 modules qui peuvent être réalisées séparéments voire simultanément si vous êtes à plusieurs !﻿\
-
+La construction du kit comprend 4 modules qui peuvent être réalisées séparéments voire simultanément si vous êtes à plusieurs !﻿<br>
 
 > * Module 1 : Panneau Solaire
 > * Module 2 : Sondes
@@ -101,8 +100,7 @@ La construction du kit comprend 4 modules qui peuvent être réalisées séparé
 > * Module 4 : Carte électronique
 
 Les 4 modules sont prévu pour s'assembler trés facilement pour constituer le kit final.﻿\
-﻿\
-
+﻿<br>
 
 #### 1 => Préparation du panneau solaire
 
@@ -114,8 +112,7 @@ Les 4 modules sont prévu pour s'assembler trés facilement pour constituer le k
 * 1 connecteurs pont de bateau male 2 pins
 * 1 gaine protectrice, diamétre XXX mm
 
-﻿\
-
+﻿<br>
 
 > **Résumé des Étapes de construction :**
 >
@@ -129,30 +126,25 @@ Les 4 modules sont prévu pour s'assembler trés facilement pour constituer le k
 **Etape 1 & 2 - Preparation des cables**
 
 On désoude le connecteur en place et on prépare deux fils de 30 cm (noir & rouge). On les dénudes et on les étame (dépôt d'étain)![](https://wikifactory.com/files/RmlsZTo1MzI3NTg=)﻿\
-Les fils de 30 cm sont soudés sur l'arrière du panneau solaire, en remplacement du connecteur en place, le rouge sur le + et le noir sur le moins![](https://wikifactory.com/files/RmlsZTo1MzI3NjM=)﻿\
-
+Les fils de 30 cm sont soudés sur l'arrière du panneau solaire, en remplacement du connecteur en place, le rouge sur le + et le noir sur le moins![](https://wikifactory.com/files/RmlsZTo1MzI3NjM=)﻿<br>
 
 **Etape 3 - Gaine protectrice**
 
-On ajoute la gaine protectrice. Astuce : il faut s'aider d'une petite tige de métal (type tige de cintre) pour l'ouvrir, et scotcher les fils à la tige pour tout faire passer à l'intérieur de la gaine.![](https://wikifactory.com/files/RmlsZTo1MzI3NjU=)﻿\
-
+On ajoute la gaine protectrice. Astuce : il faut s'aider d'une petite tige de métal (type tige de cintre) pour l'ouvrir, et scotcher les fils à la tige pour tout faire passer à l'intérieur de la gaine.![](https://wikifactory.com/files/RmlsZTo1MzI3NjU=)﻿<br>
 
 **Etape 4 : Prise de connexion**
 
-On sépare la prise de connexion en trois parties, et on fait passer l'embout métallique sur les fils, pour souder ensuite les fils sur l'embout noir. Attention : rouge sur 1 et noir sur 2 (écrit en tout petit sur l'embout!)![](https://wikifactory.com/files/RmlsZTo1MzI3Njg=)![](https://wikifactory.com/files/RmlsZTo1MzI3Njk=)On passe deux petits bouts de gaine thermorétractable (pour l'étanchéité et faux contact) avant de souder sur l'embout noir.![](https://wikifactory.com/files/RmlsZTo1MzI3NzA=)Une petite soudure...![](https://wikifactory.com/files/RmlsZTo1MzI3NzE=)Et on vient faire "fondre"la gaine thermorétractable (avec un pistolet à air chaud, un seche cheveux, un briquet, etc...) pour qu'elle recouvre à la fois le plastique et le métal jusqu'à l'embout noir.﻿\
-
+On sépare la prise de connexion en trois parties, et on fait passer l'embout métallique sur les fils, pour souder ensuite les fils sur l'embout noir. Attention : rouge sur 1 et noir sur 2 (écrit en tout petit sur l'embout!)![](https://wikifactory.com/files/RmlsZTo1MzI3Njg=)![](https://wikifactory.com/files/RmlsZTo1MzI3Njk=)On passe deux petits bouts de gaine thermorétractable (pour l'étanchéité et faux contact) avant de souder sur l'embout noir.![](https://wikifactory.com/files/RmlsZTo1MzI3NzA=)Une petite soudure...![](https://wikifactory.com/files/RmlsZTo1MzI3NzE=)Et on vient faire "fondre"la gaine thermorétractable (avec un pistolet à air chaud, un seche cheveux, un briquet, etc...) pour qu'elle recouvre à la fois le plastique et le métal jusqu'à l'embout noir.﻿<br>
 
 **Etape 5 - Preparation de la planche de support**
 
 On découpe un planche de bois de dimension :A l'aide d'une dremel (avec meches à fraiser) ou d'une fraiseuce, on creuse des sillons pour le passage de cables.Dimension ???﻿\
 PHOTO﻿\
-﻿\
-
+﻿<br>
 
 **Etape 6 : assemblage**
 
-On colle la planche de bois sur le panneau, et c'est prêt !Aprés sechage le panneau est prêt à être utilisé.![](https://wikifactory.com/files/RmlsZTo1MzIzNTE=)![](https://wikifactory.com/files/RmlsZTo1MzIzNTI=)﻿\
-
+On colle la planche de bois sur le panneau, et c'est prêt !Aprés sechage le panneau est prêt à être utilisé.![](https://wikifactory.com/files/RmlsZTo1MzIzNTE=)![](https://wikifactory.com/files/RmlsZTo1MzIzNTI=)﻿<br>
 
 #### => Préparation des sondes
 
@@ -174,8 +166,7 @@ On colle la planche de bois sur le panneau, et c'est prêt !Aprés sechage le pa
 > 5. coller les 2 sondes ensemble, avec la gaine protectrice (au sikaflex)
 > 6. ajouter la prise de connection 4 pin de l'autre coté et incluant la gaine de protection et en étanchéïfiant avec du sikaflex
 
-﻿\
-
+﻿<br>
 
 **Etape 1 &2 : préparation des câbles**
 
@@ -183,8 +174,7 @@ On colle la planche de bois sur le panneau, et c'est prêt !Aprés sechage le pa
 
 **Etape 4 : Gaine de protection**
 
-﻿\
-
+﻿<br>
 
 **Etape 5 : coller les deux sondes**
 
@@ -201,8 +191,7 @@ On colle la planche de bois sur le panneau, et c'est prêt !Aprés sechage le pa
 > * 4 vis +rondelle,M3x16???,
 > * impression de la page de déco
 
-﻿\
-
+﻿<br>
 
 **Etape de construction**
 
@@ -219,7 +208,7 @@ On colle la planche de bois sur le panneau, et c'est prêt !Aprés sechage le pa
 
 Les supports en bois, peuvent être réaliser à la main ou bien réaliser à la découpeuse laser.Pour la découpeuse laser les fichiers sont ici :Pour la réalisation manuel on utilisera les plans ici :On doit obtenir ceci :
 
-#### ﻿ 
+#### ﻿<br>
 
 #### => Préparation du boitier 2 (percage et mise en place des fixations)
 
@@ -240,8 +229,7 @@ Les supports en bois, peuvent être réaliser à la main ou bien réaliser à la
 5. Mettre en place les prises des capteurs, prise du panneau solaire, et interrupteur on-off
 
 ﻿\
-﻿\
-
+﻿<br>
 
 #### => Préparation de la carte électronique
 
@@ -265,8 +253,7 @@ Les supports en bois, peuvent être réaliser à la main ou bien réaliser à la
 > * ...
 > * ...
 >
-> ﻿\
->
+> ﻿<br>
 
 **Préparation de l'ordinateur**
 
@@ -274,8 +261,7 @@ Les supports en bois, peuvent être réaliser à la main ou bien réaliser à la
 2. Installer la carte ESP32 firebeetle
 3. Installer les librairies projet
 
-﻿\
-
+﻿<br>
 
 **Chargement du code**
 
