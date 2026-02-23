@@ -7,7 +7,7 @@
 Composants : 
 -----------
 base : Carte ESP32 Firebeetle programmé avec arduino ide
-Ecran Epaper 2.9"                                     - Connexion SPI
+Ecran Epaper 4"                                     - Connexion SPI
 Carte SD                                            - connexion SPI
 GPS  : neo6m                                        - Connexion Serie
 Horloge RTC                                         - Connexion I2C
@@ -18,23 +18,25 @@ Lipobabysister                                      - Connexion I2C
 
 Branchement : 
 -------------
-Ecran : BUSY -> 4, RST -> 25, DC -> 13, CS -> 0, CLK -> SCK(18), DIN -> MOSI(23), GND -> GND, 3.3V -> 3.3V,
+Ecran : BUSY -> 4, RST -> 25, DC -> 13, CS -> SS(5), CLK -> SCK(18), DIN -> MOSI(23), GND -> GND, 3.3V -> 3.3V,
 SD Reader : CS -> 5; 
 
 Remarque : attention pour les lib ecran : penser a changer les point cpp en .h
 
 Etat du programme : 
 -------------------
-programme avec mise en veille du proc et allumage extinction des cartes atlas
+Le code fonctionne, mais : 
+il y avait une reaction bizarre du boitier, qui ne marchait qu'apres avoir appuyer sur le bouton reset quand il était sur batterie.
+Le bug vient du bloc "test de la carte SD", si le bloc test se trouve avant le grand if du setup, alors bug (no sd card), si le bloc test se trouve dans le if/Else, alors ca marche
+bug reproductible y compris avec la version 1 du code.
+Résolution du bug en placant le bloc test dans la boucle if/else (2 fois donc), mais sans comprendre pourquoi ca buguait.
 
 Pour la prochain version : 
 ------------------------
 Tester Gerer les alimentations/veille des composants
 Ajouter les branchement
 Changer le support de carte SD
-Ajouter les secondes dans la datachain à enregistrer
-Ajouter version PCB
-Syncro GPS et RTC
+Ajouter les seconds dans la datachain à enregistrer
 
 ***********************************************************/
 
@@ -42,10 +44,10 @@ Syncro GPS et RTC
 // ---------------------   PARAMETRES MODIFIABLE DU PROGRAM    -----------------------------------
 // Version et numero de serie
 char numserie[] = "AESO19004";      // Numero de serie de la sonde
-char versoft[] = "5.2c";             // version du code
+char versoft[] = "5.2-pcb";             // version du code
 
-#define TIME_TO_SLEEP  30           // Durée d'endormissement entre 2 cycles complets de mesures (in seconds)
-int nbrMes = 5;                     // nombre de mesure de salinité et température par cycle
+#define TIME_TO_SLEEP  10           // Durée d'endormissement entre 2 cycles complets de mesures (in seconds)
+int nbrMes = 2;                     // nombre de mesure de salinité et température par cycle
 
 // --------------------     FIN DES PARAMETRES MODIFIABLES     ------------------------------------
 
@@ -69,8 +71,8 @@ int nbrMes = 5;                     // nombre de mesure de salinité et tempéra
 
 
 //SPI pin definitions pour ecran epaper
-GxIO_Class io(SPI, /*CS=5*/ 0, /*DC=*/ 13, /*RST=*/ 25); // arbitrary selection of 17, 16  //SS remplacé par 0
-GxEPD_Class display(io, /*RST=*/ 25, /*BUSY=*/ 4); // arbitrary selection of (16), 4
+GxIO_Class io(SPI, /*CS=5*/ 0, /*DC=13*/ 2, /*RST=25*/ 27); // arbitrary selection of 17, 16  //SS remplacé par 0
+GxEPD_Class display(io, /*RST=25*/ 27, /*BUSY=4*/ 26); // arbitrary selection of (16), 4
 
 // définition pour les fonts ecran
 const GFXfont* f1 = &FreeMonoBold9pt7b;
@@ -133,10 +135,10 @@ void setup()
   delay(500); //Take some time to open up the Serial Monitor and enable all things
 
 
-  pinMode(rtdpin, OUTPUT);            // pin temperature
-  pinMode(ecpin, OUTPUT);            // pin EC
-  digitalWrite(rtdpin, LOW);   // temp
-  digitalWrite(ecpin, LOW);   // ec
+//  pinMode(rtdpin, OUTPUT);            // pin temperature
+//  pinMode(ecpin, OUTPUT);            // pin EC
+//  digitalWrite(rtdpin, LOW);   // temp
+//  digitalWrite(ecpin, LOW);   // ec
 
   if(bootCount == 0) //Run this only the first time
   {
@@ -159,11 +161,13 @@ void setup()
       //Make the first line of datachain
       datachain += "lat" ; datachain += " ; "; datachain += "Lng" ; datachain += " ; "; 
       datachain += "Years"; datachain += " ; "; datachain += "Month" ; datachain += " ; "; datachain += "Day" ; datachain += " ; ";
-      datachain += "Hour"; datachain += " ; "; datachain += "Minute"; datachain += " ; "; datachain += "Second"; datachain += " ; "; 
+      datachain += "Hour"; datachain += " ; "; datachain += "Minute"; datachain += " ; "; 
       datachain += "Bat %"; datachain += " ; "; datachain += "Bat mV"; datachain += " ; "; 
         for(int n=1; n<=nbrMes; n++){
           datachain += "Temp";
           datachain += " ; ";
+        }
+        for(int n=1; n<=nbrMes; n++){
           datachain += "EC";
           datachain += " ; ";
         }
@@ -194,9 +198,9 @@ void setup()
   {
       // ---------------        HERE IS THE MAIN PROGRAMM LOOP         ----------------------------------------------------------
       
-      digitalWrite(rtdpin, HIGH);   // temp  si allumage des pin
-      digitalWrite(ecpin, HIGH);   // ec
-      delay(2000);
+//      digitalWrite(rtdpin, HIGH);   // temp  si allumage des pin
+//      digitalWrite(ecpin, HIGH);   // ec
+//      delay(2000);
 
       // Test carte SD
       Serial.print("Initializing SD card...");   
@@ -211,7 +215,6 @@ void setup()
       // lecture de l'horloge rtc
       int second,minute,hour,date,month,year; 
       //second=Clock.getSecond();
-      second=Clock.getSecond();
       minute=Clock.getMinute();
       hour=Clock.getHour(h12, PM);
       date=Clock.getDate();
@@ -234,15 +237,19 @@ void setup()
         // date heure GPS de debut de chaine
         datachain += gps.location.lat(); datachain += " ; " ;datachain += gps.location.lng(); datachain += " ; ";
         datachain += year; datachain += " ; ";datachain += month; datachain += " ; ";datachain += date; datachain += " ; ";
-        datachain += hour; datachain += " ; ";datachain += minute; datachain += " ; "; datachain += second; datachain += " ; ";
+        datachain += hour; datachain += " ; ";datachain += minute; datachain += " ; ";
         datachain += soc; datachain += " ; "; datachain += volts ; datachain += " ; ";
                 
                 
-        // température et salinité
+        // température
         for(int n=1; n<=nbrMes; n++){
           mesureRTD(); 
           datachain += rtdData;
           datachain += " ; ";
+        }
+        
+        // Salinité
+        for(int n=1; n<=nbrMes; n++){
           mesureEC(); 
           datachain += ecData;
           datachain += " ; ";
@@ -264,11 +271,11 @@ void setup()
       // Affichage ecran des datas
       Serial.print("datachain : "); Serial.println(datachain); //affichage de la chaine complete sur le port serie
 
-//          // calsal - fonction temporaire juste pour affichage d'une salinité plutot que conductivité
-//          float apar=0.0016, bpar=0.6318, cpar=0.5055; // pour un caclul pour une température de 22°
-//          //float apar=0.0002, bpar=0.7443, cpar=0.5697; // pour un caclul pour une température de 15°
-//          float xval=atof(ecData)/1000;
-//          float salfinal = apar*(xval*xval)+bpar*xval-cpar;  
+          // calsal - fonction temporaire juste pour affichage d'une salinité plutot que conductivité
+          float apar=0.0016, bpar=0.6318, cpar=0.5055; // pour un caclul pour une température de 22°
+          //float apar=0.0002, bpar=0.7443, cpar=0.5697; // pour un caclul pour une température de 15°
+          float xval=atof(ecData)/1000;
+          float salfinal = apar*(xval*xval)+bpar*xval-cpar;  
 
       display.setRotation(3);
       display.fillScreen(GxEPD_WHITE);
@@ -277,10 +284,10 @@ void setup()
       display.setTextColor(GxEPD_BLACK);
       display.setFont(f3);
       display.setCursor(10, 40); display.println(rtdData);
-      display.setCursor(172,40); display.println(ecData);    // mettre salfinal si affichage de salinité
+      display.setCursor(172,40); display.println(salfinal);
       display.setFont(f2);
       display.setCursor(40,70);display.print("deg C");
-      display.setCursor(200,70);display.print("EC");
+      display.setCursor(200,70);display.print("PSU");
     
       //cadre
       display.fillRect(147, 0, 2, 90, GxEPD_BLACK);
@@ -297,8 +304,8 @@ void setup()
       display.update();
 
 
-      digitalWrite(rtdpin, LOW);   // temp
-      digitalWrite(ecpin, LOW);   // ec
+//      digitalWrite(rtdpin, LOW);   // temp
+//      digitalWrite(ecpin, LOW);   // ec
              
   } // -------    fin Boucle exécution du programme (if pour l'intro, et else pour le programme principal)      --------------------
   
