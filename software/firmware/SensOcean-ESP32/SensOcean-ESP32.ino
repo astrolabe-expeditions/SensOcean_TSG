@@ -18,17 +18,25 @@ Lipobabysister                                      - Connexion I2C
 
 Branchement : 
 -------------
-WaveShare display 4,2 inch on ESP32 Firebeetle
-Branchement Ecran : BUSY -> 4, RST -> 25, DC -> 13, CS -> SS(5), CLK -> SCK(18), DIN -> MOSI(23), GND -> GND, 3.3V -> 3.3V,
+Ecran : BUSY -> 4, RST -> 25, DC -> 13, CS -> SS(5), CLK -> SCK(18), DIN -> MOSI(23), GND -> GND, 3.3V -> 3.3V,
+SD Reader : CS -> 5; 
 
 Remarque : attention pour les lib ecran : penser a changer les point cpp en .h
 
 Etat du programme : 
 -------------------
-
+Le code fonctionne, mais : 
+il y avait une reaction bizarre du boitier, qui ne marchait qu'apres avoir appuyer sur le bouton reset quand il était sur batterie.
+Le bug vient du bloc "test de la carte SD", si le bloc test se trouve avant le grand if du setup, alors bug (no sd card), si le bloc test se trouve dans le if/Else, alors ca marche
+bug reproductible y compris avec la version 1 du code.
+Résolution du bug en placant le bloc test dans la boucle if/else (2 fois donc), mais sans comprendre pourquoi ca buguait.
 
 Pour la prochain version : 
 ------------------------
+Tester Gerer les alimentations/veille des composants
+Ajouter les branchement
+Changer le support de carte SD
+Ajouter les seconds dans la datachain à enregistrer
 
 ***********************************************************/
 
@@ -36,10 +44,10 @@ Pour la prochain version :
 // ---------------------   PARAMETRES MODIFIABLE DU PROGRAM    -----------------------------------
 // Version et numero de serie
 char numserie[] = "AESO19004";      // Numero de serie de la sonde
-char versoft[] = "5.1";             // version du code
+char versoft[] = "5.2";             // version du code
 
-#define TIME_TO_SLEEP  30000          // Durée d'endormissement entre 2 cycles complets de mesures (in milli seconds)
-int nbrMes = 3;                     // nombre de mesure de salinité et température par cycle
+#define TIME_TO_SLEEP  10           // Durée d'endormissement entre 2 cycles complets de mesures (in seconds)
+int nbrMes = 1;                     // nombre de mesure de salinité et température par cycle
 
 // --------------------     FIN DES PARAMETRES MODIFIABLES     ------------------------------------
 
@@ -60,18 +68,6 @@ int nbrMes = 3;                     // nombre de mesure de salinité et tempéra
 #include <SD.h>                         // pour carte SD
 #include <SparkFunBQ27441.h>            // Batterie fuel gauge lipo babysister
 #include <TinyGPS++.h>                  // Gps
-#include <WiFi.h>             // pour activer wifi
-#include "ThingSpeak.h"       // lib site thingspeak
-#include "secrets.h"          // entrer dans fichier séparé les acces et mot de passe wifi et apikey pour thingspeak
-
-
-// wifi et reseau
-char ssid[] = SECRET_SSID;   // your network SSID (name) 
-char pass[] = SECRET_PASS;   // your network password
-int keyIndex = 0; // your network key Index number (needed only for WEP)    or cannal reseau en wpa si ca connecte pas
-WiFiClient client;
-unsigned long myChannelNumber = SECRET_CH_ID;
-const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
 
 
 //SPI pin definitions pour ecran epaper
@@ -83,6 +79,10 @@ const GFXfont* f1 = &FreeMonoBold9pt7b;
 const GFXfont* f2 = &FreeMonoBold12pt7b;
 const GFXfont* f3 = &FreeMonoBold18pt7b;
 const GFXfont* f4 = &FreeMonoBold24pt7b;
+
+// definition pour la fonction deepsleep de l'ESP32
+#define uS_TO_S_FACTOR 1000000      // Conversion factor for micro seconds to seconds
+RTC_DATA_ATTR int bootCount = 0;    // utile pour enregistrer un compteur dans la memoire rtc de l'ULP pour un compteur permettant un suivi entre chaque veille
 
 
 // definition pour les carte Atlas
@@ -133,66 +133,84 @@ void setup()
   setupBQ27441();                              // for Lipo Babysister sparkfun lipo fuelgauge
   display.init();                              // enable display Epaper
   delay(500); //Take some time to open up the Serial Monitor and enable all things
-  
-  // --------------        HERE IS ONLY THE INTRODUCION           -----------------------------------------------------------
 
-   // texte d'intro et cadre initiale
-      affichageintro();      
-      Serial.print("phase d'intro");
 
-   // Test carte SD
+//  pinMode(rtdpin, OUTPUT);            // pin temperature
+//  pinMode(ecpin, OUTPUT);            // pin EC
+//  digitalWrite(rtdpin, LOW);   // temp
+//  digitalWrite(ecpin, LOW);   // ec
+
+  if(bootCount == 0) //Run this only the first time
+  {
+      // --------------        HERE IS ONLY THE INTRODUCION           -----------------------------------------------------------
+      
+      affichageintro();       // texte d'intro et cadre initiale
+      Serial.println(" Phase d'introduction ");
+      //delay(3000);
+
+      // Test carte SD
       Serial.print("Initializing SD card...");   
         if (!SD.begin(5)) {                      // // see if the card is present and can be initialized, ajouter ici chipSelect ou 5 pour la pin 5 par default
         Serial.println("Card failed, or not present");
-        //delay(300);
+        errormessage();
         // don't do anything more:
         return;
       }
-      Serial.println("card initialized.");
+      Serial.println("card initialized.");   
 
+      //Make the first line of datachain
+      datachain += "lat" ; datachain += " ; "; datachain += "Lng" ; datachain += " ; "; 
+      datachain += "Years"; datachain += " ; "; datachain += "Month" ; datachain += " ; "; datachain += "Day" ; datachain += " ; ";
+      datachain += "Hour"; datachain += " ; "; datachain += "Minute"; datachain += " ; "; 
+      datachain += "Bat %"; datachain += " ; "; datachain += "Bat mV"; datachain += " ; "; 
+        for(int n=1; n<=nbrMes; n++){
+          datachain += "Temp";
+          datachain += " ; ";
+        }
+        for(int n=1; n<=nbrMes; n++){
+          datachain += "EC";
+          datachain += " ; ";
+        }
 
-    //Connection au WIFI
-    WiFi.mode(WIFI_STA); 
-    delay(10);
-    Serial.println("Connecting to ");
-    Serial.println(SECRET_SSID);
-    WiFi.begin(ssid, pass);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-      delay(500);
-      Serial.print(".");
-    }
-    Serial.println("");
-    Serial.println("Wifi connected");
+     // afficher la datachain sur le port serie
+      Serial.println(" Format de la chaine enregistrée ");
+      Serial.println(datachain);
 
-    //Initialize ThingSpeak
-    ThingSpeak.begin(client); 
+     // enregistrement de la datachain sur la carte SD
+        File dataFile = SD.open("/datalog.txt", FILE_APPEND);
+        if (dataFile) {                                        // if the file is available, write to it:
+          dataFile.println(datachain);
+          dataFile.close();
+        }
+        else {                                                 // if the file isn't open, pop up an error:
+          Serial.println("error opening datalog.txt"); 
+          errormessage();
+          delay(3000);   
+        }
 
       
-    delay(3000);
 
       
-    
- 
+      bootCount = bootCount+1;   // changement du numéro de compteur pour passer directement dans programm loop apres le reveil
+      //Serial.println("Boot number: " + String(bootCount));  //affichage du numéro de boucle depuis que l'instrument est allumé
+      
+  }else
+  {
+      // ---------------        HERE IS THE MAIN PROGRAMM LOOP         ----------------------------------------------------------
+      
+//      digitalWrite(rtdpin, HIGH);   // temp  si allumage des pin
+//      digitalWrite(ecpin, HIGH);   // ec
+//      delay(2000);
 
-
-//      digitalWrite(rtdpin, LOW);   // temp
-//      digitalWrite(ecpin, LOW);   // ec
-             
-  // -------    fin Boucle exécution du programme (if pour l'intro, et else pour le programme principal)      --------------------
-  
-
-//  // endormissement esp32
-//  Serial.println("Going to sleep");
-//  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-//  esp_deep_sleep_start();
-}
-
-
-void loop()
-{
-     // ---------------        HERE IS THE MAIN PROGRAMM LOOP         ----------------------------------------------------------
-     
+      // Test carte SD
+      Serial.print("Initializing SD card...");   
+        if (!SD.begin(5)) {                      // // see if the card is present and can be initialized, ajouter ici chipSelect ou 5 pour la pin 5 par default
+        Serial.println("Card failed, or not present");
+        errormessage();
+        // don't do anything more:
+        return;
+      }
+      Serial.println("card initialized.");           
 
       // lecture de l'horloge rtc
       int second,minute,hour,date,month,year; 
@@ -205,6 +223,7 @@ void loop()
       
       // Read battery stats from the BQ27441-G1A
       unsigned int soc = lipo.soc();  // Read state-of-charge (%)
+      unsigned int volts = lipo.voltage(); // Read battery voltage (mV)
 
       //Read the gps
       smartDelay(1000);  
@@ -216,13 +235,13 @@ void loop()
       String datachain ="";
 
         // date heure GPS de debut de chaine
-        datachain += gps.location.lat(); datachain += gps.location.lng();
+        datachain += gps.location.lat(); datachain += " ; " ;datachain += gps.location.lng(); datachain += " ; ";
         datachain += year; datachain += " ; ";datachain += month; datachain += " ; ";datachain += date; datachain += " ; ";
         datachain += hour; datachain += " ; ";datachain += minute; datachain += " ; ";
-        datachain += "bat :"; datachain += soc; datachain += " ; ";
+        datachain += soc; datachain += " ; "; datachain += volts ; datachain += " ; ";
+                
                 
         // température
-        datachain += "RTD : ";
         for(int n=1; n<=nbrMes; n++){
           mesureRTD(); 
           datachain += rtdData;
@@ -230,7 +249,6 @@ void loop()
         }
         
         // Salinité
-        datachain += "EC : ";
         for(int n=1; n<=nbrMes; n++){
           mesureEC(); 
           datachain += ecData;
@@ -244,16 +262,18 @@ void loop()
             dataFile.close();
           }
           else {                                                 // if the file isn't open, pop up an error:
-            Serial.println("error opening datalog.txt");    
+            Serial.println("error opening datalog.txt");  
+            errormessage();
+            delay(3000);  
           }
 
 
-      // Affichage ecran
+      // Affichage ecran des datas
       Serial.print("datachain : "); Serial.println(datachain); //affichage de la chaine complete sur le port serie
 
           // calsal - fonction temporaire juste pour affichage d'une salinité plutot que conductivité
-          //float apar=0.0016, bpar=0.6318, cpar=0.5055; // pour un caclul pour une température de 22°
-          float apar=0.0002, bpar=0.7443, cpar=0.5697; // pour un caclul pour une température de 15°
+          float apar=0.0016, bpar=0.6318, cpar=0.5055; // pour un caclul pour une température de 22°
+          //float apar=0.0002, bpar=0.7443, cpar=0.5697; // pour un caclul pour une température de 15°
           float xval=atof(ecData)/1000;
           float salfinal = apar*(xval*xval)+bpar*xval-cpar;  
 
@@ -284,26 +304,23 @@ void loop()
       display.update();
 
 
-  //envoi sur le serveur Thingspeak
-  // set the fields with the values
-  ThingSpeak.setField(1, rtdData);
-  ThingSpeak.setField(2, salfinal);
+//      digitalWrite(rtdpin, LOW);   // temp
+//      digitalWrite(ecpin, LOW);   // ec
+             
+  } // -------    fin Boucle exécution du programme (if pour l'intro, et else pour le programme principal)      --------------------
+  
+
+  // endormissement esp32
+  Serial.println("Going to sleep");
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  esp_deep_sleep_start();
+}
 
 
-  // Write to ThingSpeak channel
-  int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
-  if(x == 200){
-    Serial.println("Channel update successful.");
-  }
-  else{
-    Serial.println("Problem updating channel. HTTP error code " + String(x));
-  }
-
-
-
-
-  delay(TIME_TO_SLEEP);
-
+void loop()
+{
+ //never use because of the sleeping of the princess esp32
+ // peut être à utiliser pour la fonction wifi
 }
 
 
@@ -331,6 +348,24 @@ void affichageintro(){                     // texte intro à l'allumage
   display.print("Num Serie :");display.println(numserie);
   display.setCursor(30, 110);
   display.print("Ver Soft  :");display.print(versoft);
+ 
+  display.update();
+}
+
+void errormessage(){                     // texte intro à l'allumage
+  display.setRotation(3);
+  display.fillScreen(GxEPD_WHITE);
+  
+  //titre
+  display.setTextColor(GxEPD_BLACK);
+  display.setFont(f4);
+  display.setCursor(25, 55  );
+  display.println("  ERROR ");
+
+  //version
+  display.setFont(f1);
+  display.setCursor(30, 90);
+  display.print("No SD Card ");
  
   display.update();
 }
