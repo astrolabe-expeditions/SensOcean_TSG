@@ -25,26 +25,25 @@ Remarque : attention pour les lib ecran : penser a changer les point cpp en .h
 
 Etat du programme : 
 -------------------
-programme avec mise en veille du proc et allumage extinction des cartes atlas
+fonctionne ok
+Ajout de la gestion allumage et extinction du gps via pin 27n et transistor
 
 Pour la prochain version : 
 ------------------------
-Tester Gerer les alimentations/veille des composants
-Ajouter les branchement
-Changer le support de carte SD
-Ajouter les secondes dans la datachain à enregistrer
-Ajouter version PCB
+Créer un nouveau fichier a chaque allumage
 Syncro GPS et RTC
+fix du GPS au démarrage
+Lancement des mesures des le fix trouvé plutot que d'attendre la minute complète.
 
 ***********************************************************/
 
 
 // ---------------------   PARAMETRES MODIFIABLE DU PROGRAM    -----------------------------------
 // Version et numero de serie
-char numserie[] = "AESO19004";      // Numero de serie de la sonde
-char versoft[] = "5.3";             // version du code
+char numserie[] = "AESO20005";      // Numero de serie de la sonde
+char versoft[] = "5.31";             // version du code
 
-#define TIME_TO_SLEEP  7           // Durée d'endormissement entre 2 cycles complets de mesures (in seconds)
+#define TIME_TO_SLEEP  20           // Durée d'endormissement entre 2 cycles complets de mesures (in seconds)
 int nbrMes = 3;                     // nombre de mesure de salinité et température par cycle
 
 // --------------------     FIN DES PARAMETRES MODIFIABLES     -----------------------------------
@@ -120,7 +119,8 @@ const unsigned int BATTERY_CAPACITY = 3400; // e.g. 3400mAh battery
 
 // definition pour GPS
 TinyGPSPlus gps;                           
-HardwareSerial Serial1(1);   
+HardwareSerial Serial1(1);  
+int gpspin=27;
 
 // déclaration pour capteur de pression (bmp280)
 Adafruit_BMP280 bmp; // I2C Interface
@@ -145,11 +145,12 @@ void setup()
   display.init();                              // enable display Epaper
   delay(500); //Take some time to open up the Serial Monitor and enable all things
 
-
+  pinMode(gpspin, OUTPUT);            //GPS
   pinMode(rtdpin, OUTPUT);            // pin temperature
   pinMode(ecpin, OUTPUT);            // pin EC
-  digitalWrite(rtdpin, LOW);   // temp
+  digitalWrite(rtdpin, LOW);  // temp
   digitalWrite(ecpin, LOW);   // ec
+  digitalWrite(gpspin, LOW);  //GPS
 
   if(bootCount == 0) //Run this only the first time
   {
@@ -199,7 +200,8 @@ void setup()
           delay(3000);   
         }
 
-      
+      //allumer le GPS pour la 1ère recherche de satellite
+      //digitalWrite(gpspin, HIGH);
 
       
       bootCount = bootCount+1;   // changement du numéro de compteur pour passer directement dans programm loop apres le reveil
@@ -208,12 +210,17 @@ void setup()
   }else
   {
       // ---------------        HERE IS THE MAIN PROGRAMM LOOP         ----------------------------------------------------------
-      
+
+      // allume GPS et attend 1 min que le signal soit ok
+      digitalWrite(gpspin, HIGH);   //GPS
+      delay(60000);
+
+      //allume les capteurs de température et salinité
       digitalWrite(rtdpin, HIGH);   // temp  si allumage des pin
       digitalWrite(ecpin, HIGH);   // ec
-      delay(2000);
+      delay(1000);
 
-      // Test carte SD
+      // Test carte SD si présente et fonctionne
       Serial.print("Initializing SD card...");   
         if (!SD.begin(5)) {                      // // see if the card is present and can be initialized, ajouter ici chipSelect ou 5 pour la pin 5 par default
         Serial.println("Card failed, or not present");
@@ -319,9 +326,11 @@ void setup()
      
       display.update();
 
-
+      // on éteint tout les composants
       digitalWrite(rtdpin, LOW);   // temp
       digitalWrite(ecpin, LOW);   // ec
+      digitalWrite(gpspin, LOW);  // gps
+      delay(500); // pour etre sur que tout soit bien éteind
              
   } // -------    fin Boucle exécution du programme (if pour l'intro, et else pour le programme principal)      --------------------
   
