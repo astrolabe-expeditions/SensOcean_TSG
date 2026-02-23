@@ -25,11 +25,7 @@ Remarque : attention pour les lib ecran : penser a changer les point cpp en .h
 
 Etat du programme : 
 -------------------
-Le code fonctionne, mais : 
-il y avait une reaction bizarre du boitier, qui ne marchait qu'apres avoir appuyer sur le bouton reset quand il était sur batterie.
-Le bug vient du bloc "test de la carte SD", si le bloc test se trouve avant le grand if du setup, alors bug (no sd card), si le bloc test se trouve dans le if/Else, alors ca marche
-bug reproductible y compris avec la version 1 du code.
-Résolution du bug en placant le bloc test dans la boucle if/else (2 fois donc), mais sans comprendre pourquoi ca buguait.
+programme avec mise en veille du proc et allumage extinction des cartes atlas
 
 Pour la prochain version : 
 ------------------------
@@ -44,9 +40,9 @@ Ajouter les seconds dans la datachain à enregistrer
 // ---------------------   PARAMETRES MODIFIABLE DU PROGRAM    -----------------------------------
 // Version et numero de serie
 char numserie[] = "AESO19004";      // Numero de serie de la sonde
-char versoft[] = "5.2";             // version du code
+char versoft[] = "5.2b";             // version du code
 
-#define TIME_TO_SLEEP  10           // Durée d'endormissement entre 2 cycles complets de mesures (in seconds)
+#define TIME_TO_SLEEP  60           // Durée d'endormissement entre 2 cycles complets de mesures (in seconds)
 int nbrMes = 1;                     // nombre de mesure de salinité et température par cycle
 
 // --------------------     FIN DES PARAMETRES MODIFIABLES     ------------------------------------
@@ -135,10 +131,10 @@ void setup()
   delay(500); //Take some time to open up the Serial Monitor and enable all things
 
 
-//  pinMode(rtdpin, OUTPUT);            // pin temperature
-//  pinMode(ecpin, OUTPUT);            // pin EC
-//  digitalWrite(rtdpin, LOW);   // temp
-//  digitalWrite(ecpin, LOW);   // ec
+  pinMode(rtdpin, OUTPUT);            // pin temperature
+  pinMode(ecpin, OUTPUT);            // pin EC
+  digitalWrite(rtdpin, LOW);   // temp
+  digitalWrite(ecpin, LOW);   // ec
 
   if(bootCount == 0) //Run this only the first time
   {
@@ -161,7 +157,7 @@ void setup()
       //Make the first line of datachain
       datachain += "lat" ; datachain += " ; "; datachain += "Lng" ; datachain += " ; "; 
       datachain += "Years"; datachain += " ; "; datachain += "Month" ; datachain += " ; "; datachain += "Day" ; datachain += " ; ";
-      datachain += "Hour"; datachain += " ; "; datachain += "Minute"; datachain += " ; "; 
+      datachain += "Hour"; datachain += " ; "; datachain += "Minute"; datachain += " ; "; datachain += "Second"; datachain += " ; "; 
       datachain += "Bat %"; datachain += " ; "; datachain += "Bat mV"; datachain += " ; "; 
         for(int n=1; n<=nbrMes; n++){
           datachain += "Temp";
@@ -198,9 +194,9 @@ void setup()
   {
       // ---------------        HERE IS THE MAIN PROGRAMM LOOP         ----------------------------------------------------------
       
-//      digitalWrite(rtdpin, HIGH);   // temp  si allumage des pin
-//      digitalWrite(ecpin, HIGH);   // ec
-//      delay(2000);
+      digitalWrite(rtdpin, HIGH);   // temp  si allumage des pin
+      digitalWrite(ecpin, HIGH);   // ec
+      delay(2000);
 
       // Test carte SD
       Serial.print("Initializing SD card...");   
@@ -215,6 +211,7 @@ void setup()
       // lecture de l'horloge rtc
       int second,minute,hour,date,month,year; 
       //second=Clock.getSecond();
+      second=Clock.getSecond();
       minute=Clock.getMinute();
       hour=Clock.getHour(h12, PM);
       date=Clock.getDate();
@@ -237,7 +234,7 @@ void setup()
         // date heure GPS de debut de chaine
         datachain += gps.location.lat(); datachain += " ; " ;datachain += gps.location.lng(); datachain += " ; ";
         datachain += year; datachain += " ; ";datachain += month; datachain += " ; ";datachain += date; datachain += " ; ";
-        datachain += hour; datachain += " ; ";datachain += minute; datachain += " ; ";
+        datachain += hour; datachain += " ; ";datachain += minute; datachain += " ; "; datachain += second; datachain += " ; ";
         datachain += soc; datachain += " ; "; datachain += volts ; datachain += " ; ";
                 
                 
@@ -304,8 +301,8 @@ void setup()
       display.update();
 
 
-//      digitalWrite(rtdpin, LOW);   // temp
-//      digitalWrite(ecpin, LOW);   // ec
+      digitalWrite(rtdpin, LOW);   // temp
+      digitalWrite(ecpin, LOW);   // ec
              
   } // -------    fin Boucle exécution du programme (if pour l'intro, et else pour le programme principal)      --------------------
   
